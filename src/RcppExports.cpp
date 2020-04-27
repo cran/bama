@@ -7,28 +7,31 @@
 using namespace Rcpp;
 
 // run_bama_mcmc
-Rcpp::List run_bama_mcmc(arma::vec& Y, arma::vec& A, arma::mat& M, arma::mat& C, arma::vec& beta_m_init, arma::vec& alpha_a_init, double pi_m_init, double pi_a_init, int burnin, int ndraws);
-RcppExport SEXP _bama_run_bama_mcmc(SEXP YSEXP, SEXP ASEXP, SEXP MSEXP, SEXP CSEXP, SEXP beta_m_initSEXP, SEXP alpha_a_initSEXP, SEXP pi_m_initSEXP, SEXP pi_a_initSEXP, SEXP burninSEXP, SEXP ndrawsSEXP) {
+Rcpp::List run_bama_mcmc(arma::vec& Y, arma::vec& A, arma::mat& M, arma::mat& C1, arma::mat& C2, arma::vec& beta_m_init, arma::vec& alpha_a_init, int burnin, int ndraws, double k, double lm0, double lm1, double l);
+RcppExport SEXP _bama_run_bama_mcmc(SEXP YSEXP, SEXP ASEXP, SEXP MSEXP, SEXP C1SEXP, SEXP C2SEXP, SEXP beta_m_initSEXP, SEXP alpha_a_initSEXP, SEXP burninSEXP, SEXP ndrawsSEXP, SEXP kSEXP, SEXP lm0SEXP, SEXP lm1SEXP, SEXP lSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec& >::type Y(YSEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type A(ASEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type M(MSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type C(CSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type C1(C1SEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type C2(C2SEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type beta_m_init(beta_m_initSEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type alpha_a_init(alpha_a_initSEXP);
-    Rcpp::traits::input_parameter< double >::type pi_m_init(pi_m_initSEXP);
-    Rcpp::traits::input_parameter< double >::type pi_a_init(pi_a_initSEXP);
     Rcpp::traits::input_parameter< int >::type burnin(burninSEXP);
     Rcpp::traits::input_parameter< int >::type ndraws(ndrawsSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_bama_mcmc(Y, A, M, C, beta_m_init, alpha_a_init, pi_m_init, pi_a_init, burnin, ndraws));
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type lm0(lm0SEXP);
+    Rcpp::traits::input_parameter< double >::type lm1(lm1SEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_bama_mcmc(Y, A, M, C1, C2, beta_m_init, alpha_a_init, burnin, ndraws, k, lm0, lm1, l));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bama_run_bama_mcmc", (DL_FUNC) &_bama_run_bama_mcmc, 10},
+    {"_bama_run_bama_mcmc", (DL_FUNC) &_bama_run_bama_mcmc, 13},
     {NULL, NULL, 0}
 };
 

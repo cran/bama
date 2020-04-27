@@ -8,12 +8,6 @@
 #include <R.h>
 #include <RcppArmadillo.h>
 
-// constants for generating random inverse gammas. Taken from paper
-#define K    2.0
-#define L_M0 1E-4
-#define L_M1 1.0
-#define L    1.0
-
 #define EPSILON 1e-12
 
 // returns 1 with probability p
@@ -49,9 +43,9 @@ struct bama_mcmc {
 
     double    beta_a;
     arma::vec beta_m;
-    arma::vec beta_c;
+    arma::vec beta_c1;
     arma::vec alpha_a;
-    arma::mat alpha_c;
+    arma::mat alpha_c2;
 
     arma::vec rY;
     arma::mat rM;
@@ -64,32 +58,40 @@ struct bama_mcmc {
     arma::vec r3;
 
     double    norm2_a;
-    arma::vec norm2_c;
+    arma::vec norm2_c1;
+    arma::vec norm2_c2;
     arma::vec norm2_m;
 
     double pi_m;
     double pi_a;
 
-    bama_mcmc(arma::vec &Y, arma::vec &A, arma::mat &M, arma::mat &C, arma::vec
-                  &beta_m, arma::vec &alpha_a, double pi_m, double pi_a)
+
+    double k;
+    double lm0;
+    double lm1;
+    double l;
+
+    bama_mcmc(arma::vec &Y, arma::vec &A, arma::mat &M, arma::mat &C1,
+                  arma::mat &C2, arma::vec &beta_m, arma::vec &alpha_a,
+                  double k, double lm0, double lm1, double l)
     {
-        sigma_m0  = rand_invgamma(K, L_M0);
-        sigma_m1  = rand_invgamma(K, L_M1);
-        sigma_ma0 = rand_invgamma(K, L_M0);
-        sigma_ma1 = rand_invgamma(K, L_M1);
-        sigma_a   = rand_invgamma(K, L);
-        sigma_e   = rand_invgamma(K, L);
-        sigma_g   = rand_invgamma(K, L);
+        sigma_m0  = rand_invgamma(k, lm0);
+        sigma_m1  = rand_invgamma(k, lm1);
+        sigma_ma0 = rand_invgamma(k, lm0);
+        sigma_ma1 = rand_invgamma(k, lm1);
+        sigma_a   = rand_invgamma(k, l);
+        sigma_e   = rand_invgamma(k, l);
+        sigma_g   = rand_invgamma(k, l);
 
         this->beta_m  = beta_m;
         this->alpha_a = alpha_a;
 
         // beta_a must be set before initializing the residuals!
         beta_a   = R::runif(0, sqrt(sigma_a));
-        beta_c  = arma::vec(C.n_cols, arma::fill::zeros);
-        alpha_c = arma::mat(C.n_cols, M.n_cols, arma::fill::zeros);
+        beta_c1  = arma::vec(C1.n_cols, arma::fill::zeros);
+        alpha_c2 = arma::mat(C2.n_cols, M.n_cols, arma::fill::zeros);
 
-        // Initialize residuals. beta_c/ alpha_c start at 0, so they aren't
+        // Initialize residuals. beta_c1 / alpha_c2 start at 0, so they aren't
         // included in the calculation.
         rY  = Y - A * beta_a - M * beta_m;
         rM  = M - A * alpha_a.t();
@@ -109,15 +111,29 @@ struct bama_mcmc {
                 Rcpp::stop("M[, %i] norm is very small\n", j + 1);
         }
 
-        norm2_c = arma::vec(C.n_cols);
-        for (arma::uword j = 0; j < C.n_cols; ++j) {
-            norm2_c[j] = dot(C.col(j), C.col(j));
-            if (norm2_c[j] < EPSILON)
-                Rcpp::stop("C[, %i] norm is very small\n", j + 1);
+        norm2_c1 = arma::vec(C1.n_cols);
+        for (arma::uword j = 0; j < C1.n_cols; ++j) {
+            norm2_c1[j] = dot(C1.col(j), C1.col(j));
+            if (norm2_c1[j] < EPSILON)
+                Rcpp::stop("C1[, %i] norm is very small\n", j + 1);
         }
 
-        this->pi_m = pi_m;
-        this->pi_a = pi_a;
+        norm2_c2 = arma::vec(C2.n_cols);
+        for (arma::uword j = 0; j < C2.n_cols; ++j) {
+            norm2_c2[j] = dot(C2.col(j), C2.col(j));
+            if (norm2_c2[j] < EPSILON)
+                Rcpp::stop("C2[, %i] norm is very small\n", j + 1);
+        }
+
+        pi_m = mean(abs(beta_m) > EPSILON);
+        pi_m = std::min(0.9, std::max(0.1, pi_m));
+        pi_a = mean(abs(alpha_a) > EPSILON);
+        pi_a = std::min(0.9, std::max(0.1, pi_a));
+
+        this->k   = k;
+        this->lm0 = lm0;
+        this->lm0 = lm0;
+        this->l   = l;
     }
 
     void update_beta_m(arma::mat &M, arma::vec &var_m0, arma::vec &var_m1)
@@ -175,30 +191,30 @@ struct bama_mcmc {
         alpha_a = new_alpha_a;
     }
 
-    void update_alpha_c(arma::mat &C)
+    void update_alpha_c2(arma::mat &C2)
     {
         for (arma::uword j = 0; j < rM.n_cols; ++j) {
-            for (arma::uword k = 0; k < C.n_cols; ++k) {
-                auto mu_alpha_c = arma::dot(C.col(k), rM.col(j)) / norm2_c[k]
-                                  + alpha_c(k, j);
+            for (arma::uword k = 0; k < C2.n_cols; ++k) {
+                auto mu_alpha_c = arma::dot(C2.col(k), rM.col(j)) / norm2_c2[k]
+                                  + alpha_c2(k, j);
 
-                double new_alpha = rand_norm(mu_alpha_c, sigma_g / norm2_c[k]);
+                double new_alpha = rand_norm(mu_alpha_c, sigma_g / norm2_c2[k]);
 
-                rM.col(j)  += (alpha_c(k, j) - new_alpha) * C.col(k);
-                rMC.col(j) += (alpha_c(k, j) - new_alpha) * C.col(k);
-                alpha_c(k, j) = new_alpha;
+                rM.col(j)  += (alpha_c2(k, j) - new_alpha) * C2.col(k);
+                rMC.col(j) += (alpha_c2(k, j) - new_alpha) * C2.col(k);
+                alpha_c2(k, j) = new_alpha;
             }
         }
     }
 
-    void update_beta_c(arma::mat &C)
+    void update_beta_c1(arma::mat &C1)
     {
-        for (arma::uword j = 0; j < C.n_cols; ++j) {
-           double mu_beta_c = beta_c[j] + dot(C.col(j), rY) / norm2_c[j];
+        for (arma::uword j = 0; j < C1.n_cols; ++j) {
+           double mu_beta_c = beta_c1[j] + dot(C1.col(j), rY) / norm2_c1[j];
 
-           double new_beta_c = rand_norm(mu_beta_c, sigma_e / norm2_c[j]);
-           rY += C.col(j) * (beta_c[j] - new_beta_c);
-           beta_c[j] = new_beta_c;
+           double new_beta_c = rand_norm(mu_beta_c, sigma_e / norm2_c1[j]);
+           rY += C1.col(j) * (beta_c1[j] - new_beta_c);
+           beta_c1[j] = new_beta_c;
         }
     }
 
@@ -214,7 +230,7 @@ struct bama_mcmc {
         beta_a = new_beta_a;
     }
 
-    void iterate(arma::vec &A, arma::mat &M, arma::mat &C)
+    void iterate(arma::vec &A, arma::mat &M, arma::mat &C1, arma::mat &C2)
     {
         int n = rM.n_rows;
         int q = rM.n_cols;
@@ -230,13 +246,13 @@ struct bama_mcmc {
         // square every element of rM, and sum
         double lg1 = arma::accu(rM % rM);
 
-        sigma_e = rand_invgamma(K + 0.5 * n, 0.5 * le1 + L);
-        sigma_g = rand_invgamma(K + 0.5 * n * q, 0.5 * lg1 + L);
+        sigma_e = rand_invgamma(k + 0.5 * n, 0.5 * le1 + l);
+        sigma_g = rand_invgamma(k + 0.5 * n * q, 0.5 * lg1 + l);
 
         update_beta_m(M, var_m0, var_m1);
         update_alpha_a(A);
-        update_alpha_c(C);
-        update_beta_c(C);
+        update_alpha_c2(C2);
+        update_beta_c1(C1);
         update_beta_a(A);
 
         // update various sigmas based off new active / inactive sets and
@@ -253,11 +269,11 @@ struct bama_mcmc {
         double c7 = 0.5 * sum(1 - r3);
         double c8 = 0.5 * sum((1 - r3) % (alpha_a % alpha_a));
 
-        sigma_a   = rand_invgamma(0.5 + K, 0.5 * beta_a * beta_a + L);
-        sigma_m1  = rand_invgamma(c1 + K, c2 + L_M1);
-        sigma_ma1 = rand_invgamma(c3 + K, c4 + L_M1);
-        sigma_m0  = rand_invgamma(c5 + K, c6 + L_M0);
-        sigma_ma0 = rand_invgamma(c7 + K, c8 + L_M0);
+        sigma_a   = rand_invgamma(0.5 + k, 0.5 * beta_a * beta_a + l);
+        sigma_m1  = rand_invgamma(c1 + k, c2 + lm1);
+        sigma_ma1 = rand_invgamma(c3 + k, c4 + lm1);
+        sigma_m0  = rand_invgamma(c5 + k, c6 + lm0);
+        sigma_ma0 = rand_invgamma(c7 + k, c8 + lm0);
 
         // update fraction of active mediator priors (pi_m, pi_a)
         double m_pi_m = std::abs(pi_m * exp(R::runif(-.01, 0.01)));
@@ -293,17 +309,17 @@ struct bama_mcmc {
 //' @useDynLib bama
 //' @importFrom Rcpp evalCpp
 // [[Rcpp::export]]
-Rcpp::List run_bama_mcmc(arma::vec &Y, arma::vec &A, arma::mat &M, arma::mat &C,
-                             arma::vec &beta_m_init, arma::vec &alpha_a_init,
-                             double pi_m_init, double pi_a_init, int burnin,
-                             int ndraws)
+Rcpp::List run_bama_mcmc(arma::vec &Y, arma::vec &A, arma::mat &M, arma::mat &C1,
+                             arma::mat &C2, arma::vec &beta_m_init, arma::vec
+                             &alpha_a_init, int burnin, int ndraws, double k,
+                             double lm0, double lm1, double l)
 {
-    bama_mcmc mcmc = bama_mcmc(Y, A, M, C, beta_m_init, alpha_a_init,
-                                   pi_m_init, pi_a_init);
+    bama_mcmc mcmc = bama_mcmc(Y, A, M, C1, C2, beta_m_init, alpha_a_init, k,
+                                   lm0, lm1, l);
 
     // Run mcmc for the number of specified burnin iterations.
     for (int i = 0; i < burnin; ++i)
-         mcmc.iterate(A, M, C);
+         mcmc.iterate(A, M, C1, C2);
 
     auto beta_m    = Rcpp::NumericMatrix(ndraws, beta_m_init.n_elem);
     auto r1        = Rcpp::NumericMatrix(ndraws, beta_m_init.n_elem);
@@ -345,7 +361,7 @@ Rcpp::List run_bama_mcmc(arma::vec &Y, arma::vec &A, arma::mat &M, arma::mat &C,
 
         int j = 0;
         while (j++ < 50)
-            mcmc.iterate(A, M, C);
+            mcmc.iterate(A, M, C1, C2);
     }
 
     // Wrap up samples in a named R list and return.
