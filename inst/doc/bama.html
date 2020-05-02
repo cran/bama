@@ -148,16 +148,16 @@ bama.out &lt;-<span class="st"> </span><span class="kw">bama</span>(Y, A, M, C1,
 <span class="co"># rank the mediators by PIP and return the highest 10</span>
 <span class="kw">summary</span>(bama.out, <span class="dt">rank =</span> T)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>,]
 <span class="co">#&gt;         estimate     ci.lower    ci.upper  pip</span>
-<span class="co">#&gt; m65 -0.241145180 -0.308152763 -0.17779774 1.00</span>
-<span class="co">#&gt; m12  0.187683968  0.131312319  0.25085358 0.99</span>
-<span class="co">#&gt; m89 -0.150850110 -0.209317223 -0.07298155 0.93</span>
-<span class="co">#&gt; m93  0.034993501 -0.008819844  0.09245321 0.16</span>
-<span class="co">#&gt; m97 -0.032084764 -0.080557799  0.00222252 0.09</span>
-<span class="co">#&gt; m42 -0.018814394 -0.064469565  0.01653641 0.06</span>
-<span class="co">#&gt; m22 -0.028022924 -0.075933252  0.01434297 0.05</span>
-<span class="co">#&gt; m37  0.002392765 -0.047393940  0.03914002 0.05</span>
-<span class="co">#&gt; m58  0.001846836 -0.043664001  0.04188409 0.04</span>
-<span class="co">#&gt; m76  0.007816026 -0.035076587  0.05007017 0.04</span></code></pre></div>
+<span class="co">#&gt; m65 -0.264486934 -0.328705614 -0.19282056 1.00</span>
+<span class="co">#&gt; m12  0.198286890  0.136895446  0.26869921 0.99</span>
+<span class="co">#&gt; m89 -0.143646544 -0.224018959 -0.05699812 0.83</span>
+<span class="co">#&gt; m93  0.033966711 -0.001209342  0.09014840 0.05</span>
+<span class="co">#&gt; m22 -0.023336872 -0.069405421  0.02288249 0.03</span>
+<span class="co">#&gt; m67  0.009776543 -0.032492573  0.04565784 0.03</span>
+<span class="co">#&gt; m57  0.015029742 -0.022480618  0.05824432 0.02</span>
+<span class="co">#&gt; m86  0.018896307 -0.019927875  0.06208343 0.02</span>
+<span class="co">#&gt; m90 -0.020909128 -0.069062896  0.01643856 0.02</span>
+<span class="co">#&gt; m97 -0.031851891 -0.074532133  0.01493506 0.02</span></code></pre></div>
 <p>Here, the summary function calculates the posterior inclusion probability (PIP) <code>r1 = r3 = 1 | Data</code>, and ranks each mediator by its PIP. Each mediator’s estimate and 95% credible interval is also calculated.</p>
 </div>
 <div id="reference" class="section level2">
