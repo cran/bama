@@ -10,50 +10,93 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<meta name="author" content="Alexander Rix alexrix@umich.edu" />
 
 
 <title>Bayesian Mediation Analysis in R</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-div.sourceCode { overflow-x: auto; }
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 
 </style>
 <script>
@@ -80,7 +123,187 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 
-<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
 
 
 
@@ -93,80 +316,71 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 <h1 class="title toc-ignore">Bayesian Mediation Analysis in R</h1>
-<h4 class="author">Alexander Rix <a href="mailto:alexrix@umich.edu">alexrix@umich.edu</a></h4>
 
 
 
-<p>Perform mediation analysis in the presence of high-dimensional mediators based on the potential outcome framework. Bayesian Mediation Analysis (BAMA), developed by Song et al (2019), relies on two Bayesian sparse linear mixed models to simultaneously analyze a relatively large number of mediators for a continuous exposure and outcome assuming a small number of mediators are truly active. This sparsity assumption also allows the extension of univariate mediator analysis by casting the identification of active mediators as a variable selection problem and applying Bayesian methods with continuous shrinkage priors on the effects.</p>
+<p>Perform mediation analysis in the presence of high-dimensional mediators based on the potential outcome framework. Bayesian Mediation Analysis (BAMA), developed by Song et al (2019) and Song et al (2020), relies on two Bayesian sparse linear mixed models to simultaneously analyze a relatively large number of mediators for a continuous exposure and outcome assuming a small number of mediators are truly active. This sparsity assumption also allows the extension of univariate mediator analysis by casting the identification of active mediators as a variable selection problem and applying Bayesian methods with continuous shrinkage priors on the effects.</p>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
 <p>You can install <code>bama</code> from CRAN</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">&quot;bama&quot;</span>)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">install.packages</span>(<span class="st">&quot;bama&quot;</span>)</span></code></pre></div>
 <p>or from Github via <code>devtools</code></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install.packages(devtools)</span>
-devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;umich-cphds/bama&quot;</span>, <span class="dt">built_opts =</span> <span class="kw">c</span>())</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># install.packages(devtools)</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;umich-cphds/bama&quot;</span>, <span class="dt">built_opts =</span> <span class="kw">c</span>())</span></code></pre></div>
 <p><code>bama</code> requires the R packages <code>Rcpp</code> and <code>RcppArmadillo</code>, so you may want to install / update them before downloading. If you decide to install <code>bama</code> from source (eg github), you will need a C++ compiler that supports C++11. On Windows this can accomplished by installing <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a>, and <a href="https://apps.apple.com/us/app/xcode/id497799835?mt=12">Xcode</a> on MacOS.</p>
 <p>The Github version may contain new features or bug fixes not yet present on CRAN, so if you are experiencing issues, you may want to try the Github version of the package. ## Example problem <code>bama</code> contains a semi-synthetic example data set, <code>bama.data</code> that is used in this example. <code>bama.data</code> contains a continuous response <code>y</code> and a continuous exposure <code>a</code> that is mediated by 100 mediators, <code>m[1:100]</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(bama)
-<span class="co"># print just the first 10 columns</span>
-<span class="kw">head</span>(bama.data[,<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>])
-<span class="co">#&gt;            y          a          m1         m2          m3         m4</span>
-<span class="co">#&gt; 1 -0.5077701  1.3979467 -0.75395346 -0.2787043 -0.04471833  0.3422936</span>
-<span class="co">#&gt; 2 -0.3239898 -0.2311032 -1.20208195  0.4210638  0.93175992 -0.3699733</span>
-<span class="co">#&gt; 3 -1.8553536 -2.4647028 -0.65712133  0.3285993  0.59144748 -0.1307554</span>
-<span class="co">#&gt; 4  0.1685455  0.1119932  0.04982723  0.6816996 -0.12956715 -0.8348541</span>
-<span class="co">#&gt; 5  0.9070900  0.4994626 -0.99964057 -0.7660710  1.53962908 -0.9308951</span>
-<span class="co">#&gt; 6 -1.0357105  0.6359685  1.06954128 -0.2441489 -1.52176072  0.4657214</span>
-<span class="co">#&gt;            m5          m6          m7           m8</span>
-<span class="co">#&gt; 1 -0.66227113 -0.30925865  1.58001664  0.008326522</span>
-<span class="co">#&gt; 2  1.09811497 -0.09969085  1.02369272  0.045104531</span>
-<span class="co">#&gt; 3 -0.30196963  0.38853526 -0.05841533 -0.436429826</span>
-<span class="co">#&gt; 4  0.08936191 -0.69699157  0.41615473  0.973411472</span>
-<span class="co">#&gt; 5  1.12107670  1.07603088  0.37449777 -0.289794580</span>
-<span class="co">#&gt; 6 -1.55992443 -0.42705075 -0.98761802 -0.639473238</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">library</span>(bama)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co"># print just the first 10 columns</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">head</span>(bama.data[,<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>])</span></code></pre></div>
 <p>The mediators have an internal correlation structure that is based off the covariance matrix from the Multi-Ethnic Study of Atherosclerosis (MESA) data. However, <code>bama</code> does not model internal correlation between mediators. Instead, <code>bama</code> employs continuous Bayesian shrinkage priors to select mediators and assumes that all the potential mediators contribute small effects in mediating the exposure-outcome relationship, but only a small proportion of mediators exhibit large effects.</p>
 <p>We use no adjustment covariates in this example, so we just include the intercept. Also, in a real world situation, it may be beneficial to normalize the input data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
-Y &lt;-<span class="st"> </span>bama.data<span class="op">$</span>y
-A &lt;-<span class="st"> </span>bama.data<span class="op">$</span>a
-
-<span class="co"># grab the mediators from the example data.frame</span>
-M &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(bama.data[, <span class="kw">paste0</span>(<span class="st">&quot;m&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>)])
-
-<span class="co"># We just include the intercept term in this example.</span>
-C1 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>, <span class="kw">nrow</span>(M), <span class="dv">1</span>)
-C2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>, <span class="kw">nrow</span>(M), <span class="dv">1</span>)
-
-<span class="co"># Initial guesses for coefficients</span>
-beta.m  &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(M))
-alpha.a &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(M))
-
-<span class="kw">set.seed</span>(<span class="dv">12345</span>)
-<span class="co"># It is recommended to pick a larger number for burnin.</span>
-bama.out &lt;-<span class="st"> </span><span class="kw">bama</span>(Y, A, M, C1, C2, beta.m, alpha.a, <span class="dt">burnin =</span> <span class="dv">3000</span>, <span class="dt">ndraws =</span> <span class="dv">100</span>)
-
-<span class="co"># rank the mediators by PIP and return the highest 10</span>
-<span class="kw">summary</span>(bama.out, <span class="dt">rank =</span> T)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>,]
-<span class="co">#&gt;         estimate     ci.lower    ci.upper  pip</span>
-<span class="co">#&gt; m65 -0.264486934 -0.328705614 -0.19282056 1.00</span>
-<span class="co">#&gt; m12  0.198286890  0.136895446  0.26869921 0.99</span>
-<span class="co">#&gt; m89 -0.143646544 -0.224018959 -0.05699812 0.83</span>
-<span class="co">#&gt; m93  0.033966711 -0.001209342  0.09014840 0.05</span>
-<span class="co">#&gt; m22 -0.023336872 -0.069405421  0.02288249 0.03</span>
-<span class="co">#&gt; m67  0.009776543 -0.032492573  0.04565784 0.03</span>
-<span class="co">#&gt; m57  0.015029742 -0.022480618  0.05824432 0.02</span>
-<span class="co">#&gt; m86  0.018896307 -0.019927875  0.06208343 0.02</span>
-<span class="co">#&gt; m90 -0.020909128 -0.069062896  0.01643856 0.02</span>
-<span class="co">#&gt; m97 -0.031851891 -0.074532133  0.01493506 0.02</span></code></pre></div>
-<p>Here, the summary function calculates the posterior inclusion probability (PIP) <code>r1 = r3 = 1 | Data</code>, and ranks each mediator by its PIP. Each mediator’s estimate and 95% credible interval is also calculated.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>Y &lt;-<span class="st"> </span>bama.data<span class="op">$</span>y</span>
+<span id="cb4-2"><a href="#cb4-2"></a>A &lt;-<span class="st"> </span>bama.data<span class="op">$</span>a</span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a><span class="co"># grab the mediators from the example data.frame</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>M &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(bama.data[, <span class="kw">paste0</span>(<span class="st">&quot;m&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>)], <span class="kw">nrow</span>(bama.data))</span>
+<span id="cb4-6"><a href="#cb4-6"></a></span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="co"># We just include the intercept term in this example as we have no covariates</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a>C1 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>, <span class="dv">1000</span>, <span class="dv">1</span>)</span>
+<span id="cb4-9"><a href="#cb4-9"></a>C2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>, <span class="dv">1000</span>, <span class="dv">1</span>)</span>
+<span id="cb4-10"><a href="#cb4-10"></a>beta.m  &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb4-11"><a href="#cb4-11"></a>alpha.a &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb4-12"><a href="#cb4-12"></a></span>
+<span id="cb4-13"><a href="#cb4-13"></a>out &lt;-<span class="st"> </span><span class="kw">bama</span>(<span class="dt">Y =</span> Y, <span class="dt">A =</span> A, <span class="dt">M =</span> M, <span class="dt">C1 =</span> C1, <span class="dt">C2 =</span> C2, <span class="dt">method =</span> <span class="st">&quot;BSLMM&quot;</span>, <span class="dt">seed =</span> <span class="dv">1234</span>,</span>
+<span id="cb4-14"><a href="#cb4-14"></a>            <span class="dt">burnin =</span> <span class="dv">1000</span>, <span class="dt">ndraws =</span> <span class="dv">1100</span>, <span class="dt">weights =</span> <span class="ot">NULL</span>, <span class="dt">inits =</span> <span class="ot">NULL</span>, </span>
+<span id="cb4-15"><a href="#cb4-15"></a>            <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">k =</span> <span class="dv">2</span>, <span class="dt">lm0 =</span> <span class="fl">1e-04</span>, <span class="dt">lm1 =</span> <span class="dv">1</span>, <span class="dt">l =</span> <span class="dv">1</span>))</span>
+<span id="cb4-16"><a href="#cb4-16"></a></span>
+<span id="cb4-17"><a href="#cb4-17"></a><span class="co"># The package includes a function to summarise output from &#39;bama&#39;</span></span>
+<span id="cb4-18"><a href="#cb4-18"></a>summary &lt;-<span class="st"> </span><span class="kw">summary</span>(out)</span>
+<span id="cb4-19"><a href="#cb4-19"></a><span class="kw">head</span>(summary)</span>
+<span id="cb4-20"><a href="#cb4-20"></a></span>
+<span id="cb4-21"><a href="#cb4-21"></a><span class="co"># Product Threshold Gaussian </span></span>
+<span id="cb4-22"><a href="#cb4-22"></a>ptgmod =<span class="st"> </span><span class="kw">bama</span>(<span class="dt">Y =</span> Y, <span class="dt">A =</span> A, <span class="dt">M =</span> M, <span class="dt">C1 =</span> C1, <span class="dt">C2 =</span> C2, <span class="dt">method =</span> <span class="st">&quot;PTG&quot;</span>, <span class="dt">seed =</span> <span class="dv">1234</span>,</span>
+<span id="cb4-23"><a href="#cb4-23"></a>              <span class="dt">burnin =</span> <span class="dv">1000</span>, <span class="dt">ndraws =</span> <span class="dv">1100</span>, <span class="dt">weights =</span> <span class="ot">NULL</span>, <span class="dt">inits =</span> <span class="ot">NULL</span>, </span>
+<span id="cb4-24"><a href="#cb4-24"></a>              <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">lambda0 =</span> <span class="fl">0.04</span>, <span class="dt">lambda1 =</span> <span class="fl">0.2</span>, <span class="dt">lambda2 =</span> <span class="fl">0.2</span>))</span>
+<span id="cb4-25"><a href="#cb4-25"></a></span>
+<span id="cb4-26"><a href="#cb4-26"></a><span class="kw">mean</span>(ptgmod<span class="op">$</span>beta.a)</span>
+<span id="cb4-27"><a href="#cb4-27"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>beta.m, <span class="dv">2</span>, mean)</span>
+<span id="cb4-28"><a href="#cb4-28"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>alpha.a, <span class="dv">2</span>, mean)</span>
+<span id="cb4-29"><a href="#cb4-29"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>betam_member, <span class="dv">2</span>, mean)</span>
+<span id="cb4-30"><a href="#cb4-30"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>alphaa_member, <span class="dv">2</span>, mean)</span>
+<span id="cb4-31"><a href="#cb4-31"></a></span>
+<span id="cb4-32"><a href="#cb4-32"></a><span class="co"># Gaussian Mixture Model</span></span>
+<span id="cb4-33"><a href="#cb4-33"></a>gmmmod =<span class="st"> </span><span class="kw">bama</span>(<span class="dt">Y =</span> Y, <span class="dt">A =</span> A, <span class="dt">M =</span> M, <span class="dt">C1 =</span> C1, <span class="dt">C2 =</span> C2, <span class="dt">method =</span> <span class="st">&quot;GMM&quot;</span>, <span class="dt">seed =</span> <span class="dv">1234</span>,</span>
+<span id="cb4-34"><a href="#cb4-34"></a>              <span class="dt">burnin =</span> <span class="dv">1000</span>, <span class="dt">ndraws =</span> <span class="dv">1100</span>, <span class="dt">weights =</span> <span class="ot">NULL</span>, <span class="dt">inits =</span> <span class="ot">NULL</span>, </span>
+<span id="cb4-35"><a href="#cb4-35"></a>              <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">phi0 =</span> <span class="fl">0.01</span>, <span class="dt">phi1 =</span> <span class="fl">0.01</span>))</span>
+<span id="cb4-36"><a href="#cb4-36"></a></span>
+<span id="cb4-37"><a href="#cb4-37"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>beta.a)</span>
+<span id="cb4-38"><a href="#cb4-38"></a><span class="kw">apply</span>(gmmmod<span class="op">$</span>beta.m, <span class="dv">2</span>, mean)</span>
+<span id="cb4-39"><a href="#cb4-39"></a><span class="kw">apply</span>(gmmmod<span class="op">$</span>alpha.a, <span class="dv">2</span>, mean)</span>
+<span id="cb4-40"><a href="#cb4-40"></a></span>
+<span id="cb4-41"><a href="#cb4-41"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>sigma.sq.a)</span>
+<span id="cb4-42"><a href="#cb4-42"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>sigma.sq.e)</span>
+<span id="cb4-43"><a href="#cb4-43"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>sigma.sq.g)</span></code></pre></div>
 </div>
 <div id="reference" class="section level2">
 <h2>Reference</h2>
-<p>Song, Y, Zhou, X, Zhang, M, et al. Bayesian shrinkage estimation of high dimensional causal mediation effects in omics studies. Biometrics. 2019; 1-11. <a href="https://doi.org/10.1111/biom.13189">doi:10.1111/biom.13189</a></p>
-</div>
-<div id="contact" class="section level2">
-<h2>Contact</h2>
-<p>If you would like to report a bug, ask questions, or suggest something, please e-mail Alexander Rix at <code>alexrix@umich.edu</code>.</p>
+<p>Song, Y, Zhou, X, Zhang, M, et al. Bayesian shrinkage estimation of high dimensional causal mediation effects in omics studies. Biometrics. 2019; 1-11.</p>
 </div>
 
 
