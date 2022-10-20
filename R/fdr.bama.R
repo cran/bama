@@ -190,7 +190,7 @@ fdr.bama <- function(Y, A, M, C1, C2, beta.m, alpha.a, burnin, ndraws,
 summary.fdr.bama <- function(object, rank = F, ci = c(0.025, 0.975),
                              fdr = object$fdr, filter = T, ...)
 {
-    if (class(object) != "fdr.bama")
+    if (!identical(class(object), "fdr.bama"))
         stop("'object' is not an bama object.")
 
     if (!is.logical(rank) || length(rank) != 1)

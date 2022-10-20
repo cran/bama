@@ -14,39 +14,53 @@
 
 <title>Bayesian Mediation Analysis in R</title>
 
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
   }
 });
 </script>
 
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
-<style type="text/css">code{white-space: pre;}</style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -66,7 +80,7 @@ pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-le
 div.sourceCode
   {   }
 @media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -106,13 +120,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -120,6 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -319,68 +341,99 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<p>Perform mediation analysis in the presence of high-dimensional mediators based on the potential outcome framework. Bayesian Mediation Analysis (BAMA), developed by Song et al (2019) and Song et al (2020), relies on two Bayesian sparse linear mixed models to simultaneously analyze a relatively large number of mediators for a continuous exposure and outcome assuming a small number of mediators are truly active. This sparsity assumption also allows the extension of univariate mediator analysis by casting the identification of active mediators as a variable selection problem and applying Bayesian methods with continuous shrinkage priors on the effects.</p>
+<p>Perform mediation analysis in the presence of high-dimensional
+mediators based on the potential outcome framework. Bayesian Mediation
+Analysis (BAMA), developed by Song et al (2019) and Song et al (2020),
+relies on two Bayesian sparse linear mixed models to simultaneously
+analyze a relatively large number of mediators for a continuous exposure
+and outcome assuming a small number of mediators are truly active. This
+sparsity assumption also allows the extension of univariate mediator
+analysis by casting the identification of active mediators as a variable
+selection problem and applying Bayesian methods with continuous
+shrinkage priors on the effects.</p>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
 <p>You can install <code>bama</code> from CRAN</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">install.packages</span>(<span class="st">&quot;bama&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;bama&quot;</span>)</span></code></pre></div>
 <p>or from Github via <code>devtools</code></p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># install.packages(devtools)</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a>devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;umich-cphds/bama&quot;</span>, <span class="dt">built_opts =</span> <span class="kw">c</span>())</span></code></pre></div>
-<p><code>bama</code> requires the R packages <code>Rcpp</code> and <code>RcppArmadillo</code>, so you may want to install / update them before downloading. If you decide to install <code>bama</code> from source (eg github), you will need a C++ compiler that supports C++11. On Windows this can accomplished by installing <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a>, and <a href="https://apps.apple.com/us/app/xcode/id497799835?mt=12">Xcode</a> on MacOS.</p>
-<p>The Github version may contain new features or bug fixes not yet present on CRAN, so if you are experiencing issues, you may want to try the Github version of the package. ## Example problem <code>bama</code> contains a semi-synthetic example data set, <code>bama.data</code> that is used in this example. <code>bama.data</code> contains a continuous response <code>y</code> and a continuous exposure <code>a</code> that is mediated by 100 mediators, <code>m[1:100]</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">library</span>(bama)</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co"># print just the first 10 columns</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">head</span>(bama.data[,<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>])</span></code></pre></div>
-<p>The mediators have an internal correlation structure that is based off the covariance matrix from the Multi-Ethnic Study of Atherosclerosis (MESA) data. However, <code>bama</code> does not model internal correlation between mediators. Instead, <code>bama</code> employs continuous Bayesian shrinkage priors to select mediators and assumes that all the potential mediators contribute small effects in mediating the exposure-outcome relationship, but only a small proportion of mediators exhibit large effects.</p>
-<p>We use no adjustment covariates in this example, so we just include the intercept. Also, in a real world situation, it may be beneficial to normalize the input data.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>Y &lt;-<span class="st"> </span>bama.data<span class="op">$</span>y</span>
-<span id="cb4-2"><a href="#cb4-2"></a>A &lt;-<span class="st"> </span>bama.data<span class="op">$</span>a</span>
-<span id="cb4-3"><a href="#cb4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4"></a><span class="co"># grab the mediators from the example data.frame</span></span>
-<span id="cb4-5"><a href="#cb4-5"></a>M &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(bama.data[, <span class="kw">paste0</span>(<span class="st">&quot;m&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>)], <span class="kw">nrow</span>(bama.data))</span>
-<span id="cb4-6"><a href="#cb4-6"></a></span>
-<span id="cb4-7"><a href="#cb4-7"></a><span class="co"># We just include the intercept term in this example as we have no covariates</span></span>
-<span id="cb4-8"><a href="#cb4-8"></a>C1 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>, <span class="dv">1000</span>, <span class="dv">1</span>)</span>
-<span id="cb4-9"><a href="#cb4-9"></a>C2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>, <span class="dv">1000</span>, <span class="dv">1</span>)</span>
-<span id="cb4-10"><a href="#cb4-10"></a>beta.m  &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span>
-<span id="cb4-11"><a href="#cb4-11"></a>alpha.a &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span>
-<span id="cb4-12"><a href="#cb4-12"></a></span>
-<span id="cb4-13"><a href="#cb4-13"></a>out &lt;-<span class="st"> </span><span class="kw">bama</span>(<span class="dt">Y =</span> Y, <span class="dt">A =</span> A, <span class="dt">M =</span> M, <span class="dt">C1 =</span> C1, <span class="dt">C2 =</span> C2, <span class="dt">method =</span> <span class="st">&quot;BSLMM&quot;</span>, <span class="dt">seed =</span> <span class="dv">1234</span>,</span>
-<span id="cb4-14"><a href="#cb4-14"></a>            <span class="dt">burnin =</span> <span class="dv">1000</span>, <span class="dt">ndraws =</span> <span class="dv">1100</span>, <span class="dt">weights =</span> <span class="ot">NULL</span>, <span class="dt">inits =</span> <span class="ot">NULL</span>, </span>
-<span id="cb4-15"><a href="#cb4-15"></a>            <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">k =</span> <span class="dv">2</span>, <span class="dt">lm0 =</span> <span class="fl">1e-04</span>, <span class="dt">lm1 =</span> <span class="dv">1</span>, <span class="dt">l =</span> <span class="dv">1</span>))</span>
-<span id="cb4-16"><a href="#cb4-16"></a></span>
-<span id="cb4-17"><a href="#cb4-17"></a><span class="co"># The package includes a function to summarise output from &#39;bama&#39;</span></span>
-<span id="cb4-18"><a href="#cb4-18"></a>summary &lt;-<span class="st"> </span><span class="kw">summary</span>(out)</span>
-<span id="cb4-19"><a href="#cb4-19"></a><span class="kw">head</span>(summary)</span>
-<span id="cb4-20"><a href="#cb4-20"></a></span>
-<span id="cb4-21"><a href="#cb4-21"></a><span class="co"># Product Threshold Gaussian </span></span>
-<span id="cb4-22"><a href="#cb4-22"></a>ptgmod =<span class="st"> </span><span class="kw">bama</span>(<span class="dt">Y =</span> Y, <span class="dt">A =</span> A, <span class="dt">M =</span> M, <span class="dt">C1 =</span> C1, <span class="dt">C2 =</span> C2, <span class="dt">method =</span> <span class="st">&quot;PTG&quot;</span>, <span class="dt">seed =</span> <span class="dv">1234</span>,</span>
-<span id="cb4-23"><a href="#cb4-23"></a>              <span class="dt">burnin =</span> <span class="dv">1000</span>, <span class="dt">ndraws =</span> <span class="dv">1100</span>, <span class="dt">weights =</span> <span class="ot">NULL</span>, <span class="dt">inits =</span> <span class="ot">NULL</span>, </span>
-<span id="cb4-24"><a href="#cb4-24"></a>              <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">lambda0 =</span> <span class="fl">0.04</span>, <span class="dt">lambda1 =</span> <span class="fl">0.2</span>, <span class="dt">lambda2 =</span> <span class="fl">0.2</span>))</span>
-<span id="cb4-25"><a href="#cb4-25"></a></span>
-<span id="cb4-26"><a href="#cb4-26"></a><span class="kw">mean</span>(ptgmod<span class="op">$</span>beta.a)</span>
-<span id="cb4-27"><a href="#cb4-27"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>beta.m, <span class="dv">2</span>, mean)</span>
-<span id="cb4-28"><a href="#cb4-28"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>alpha.a, <span class="dv">2</span>, mean)</span>
-<span id="cb4-29"><a href="#cb4-29"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>betam_member, <span class="dv">2</span>, mean)</span>
-<span id="cb4-30"><a href="#cb4-30"></a><span class="kw">apply</span>(ptgmod<span class="op">$</span>alphaa_member, <span class="dv">2</span>, mean)</span>
-<span id="cb4-31"><a href="#cb4-31"></a></span>
-<span id="cb4-32"><a href="#cb4-32"></a><span class="co"># Gaussian Mixture Model</span></span>
-<span id="cb4-33"><a href="#cb4-33"></a>gmmmod =<span class="st"> </span><span class="kw">bama</span>(<span class="dt">Y =</span> Y, <span class="dt">A =</span> A, <span class="dt">M =</span> M, <span class="dt">C1 =</span> C1, <span class="dt">C2 =</span> C2, <span class="dt">method =</span> <span class="st">&quot;GMM&quot;</span>, <span class="dt">seed =</span> <span class="dv">1234</span>,</span>
-<span id="cb4-34"><a href="#cb4-34"></a>              <span class="dt">burnin =</span> <span class="dv">1000</span>, <span class="dt">ndraws =</span> <span class="dv">1100</span>, <span class="dt">weights =</span> <span class="ot">NULL</span>, <span class="dt">inits =</span> <span class="ot">NULL</span>, </span>
-<span id="cb4-35"><a href="#cb4-35"></a>              <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">phi0 =</span> <span class="fl">0.01</span>, <span class="dt">phi1 =</span> <span class="fl">0.01</span>))</span>
-<span id="cb4-36"><a href="#cb4-36"></a></span>
-<span id="cb4-37"><a href="#cb4-37"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>beta.a)</span>
-<span id="cb4-38"><a href="#cb4-38"></a><span class="kw">apply</span>(gmmmod<span class="op">$</span>beta.m, <span class="dv">2</span>, mean)</span>
-<span id="cb4-39"><a href="#cb4-39"></a><span class="kw">apply</span>(gmmmod<span class="op">$</span>alpha.a, <span class="dv">2</span>, mean)</span>
-<span id="cb4-40"><a href="#cb4-40"></a></span>
-<span id="cb4-41"><a href="#cb4-41"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>sigma.sq.a)</span>
-<span id="cb4-42"><a href="#cb4-42"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>sigma.sq.e)</span>
-<span id="cb4-43"><a href="#cb4-43"></a><span class="kw">mean</span>(gmmmod<span class="op">$</span>sigma.sq.g)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages(devtools)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;umich-cphds/bama&quot;</span>, <span class="at">built_opts =</span> <span class="fu">c</span>())</span></code></pre></div>
+<p><code>bama</code> requires the R packages <code>Rcpp</code> and
+<code>RcppArmadillo</code>, so you may want to install / update them
+before downloading. If you decide to install <code>bama</code> from
+source (eg github), you will need a C++ compiler that supports C++11. On
+Windows this can accomplished by installing <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a>, and <a href="https://apps.apple.com/us/app/xcode/id497799835?mt=12">Xcode</a>
+on MacOS.</p>
+<p>The Github version may contain new features or bug fixes not yet
+present on CRAN, so if you are experiencing issues, you may want to try
+the Github version of the package. ## Example problem <code>bama</code>
+contains a semi-synthetic example data set, <code>bama.data</code> that
+is used in this example. <code>bama.data</code> contains a continuous
+response <code>y</code> and a continuous exposure <code>a</code> that is
+mediated by 100 mediators, <code>m[1:100]</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bama)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># print just the first 10 columns</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(bama.data[,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>])</span></code></pre></div>
+<p>The mediators have an internal correlation structure that is based
+off the covariance matrix from the Multi-Ethnic Study of Atherosclerosis
+(MESA) data. However, <code>bama</code> does not model internal
+correlation between mediators. Instead, <code>bama</code> employs
+continuous Bayesian shrinkage priors to select mediators and assumes
+that all the potential mediators contribute small effects in mediating
+the exposure-outcome relationship, but only a small proportion of
+mediators exhibit large effects.</p>
+<p>We use no adjustment covariates in this example, so we just include
+the intercept. Also, in a real world situation, it may be beneficial to
+normalize the input data.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> bama.data<span class="sc">$</span>y</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> bama.data<span class="sc">$</span>a</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># grab the mediators from the example data.frame</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>M <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(bama.data[, <span class="fu">paste0</span>(<span class="st">&quot;m&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>)], <span class="fu">nrow</span>(bama.data))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># We just include the intercept term in this example as we have no covariates</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>C1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="dv">1000</span>, <span class="dv">1</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>C2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="dv">1000</span>, <span class="dv">1</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>beta.m  <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>alpha.a <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">bama</span>(<span class="at">Y =</span> Y, <span class="at">A =</span> A, <span class="at">M =</span> M, <span class="at">C1 =</span> C1, <span class="at">C2 =</span> C2, <span class="at">method =</span> <span class="st">&quot;BSLMM&quot;</span>, <span class="at">seed =</span> <span class="dv">1234</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">burnin =</span> <span class="dv">1000</span>, <span class="at">ndraws =</span> <span class="dv">1100</span>, <span class="at">weights =</span> <span class="cn">NULL</span>, <span class="at">inits =</span> <span class="cn">NULL</span>, </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">control =</span> <span class="fu">list</span>(<span class="at">k =</span> <span class="dv">2</span>, <span class="at">lm0 =</span> <span class="fl">1e-04</span>, <span class="at">lm1 =</span> <span class="dv">1</span>, <span class="at">l =</span> <span class="dv">1</span>))</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># The package includes a function to summarise output from &#39;bama&#39;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>summary <span class="ot">&lt;-</span> <span class="fu">summary</span>(out)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(summary)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Product Threshold Gaussian </span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>ptgmod <span class="ot">=</span> <span class="fu">bama</span>(<span class="at">Y =</span> Y, <span class="at">A =</span> A, <span class="at">M =</span> M, <span class="at">C1 =</span> C1, <span class="at">C2 =</span> C2, <span class="at">method =</span> <span class="st">&quot;PTG&quot;</span>, <span class="at">seed =</span> <span class="dv">1234</span>,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>              <span class="at">burnin =</span> <span class="dv">1000</span>, <span class="at">ndraws =</span> <span class="dv">1100</span>, <span class="at">weights =</span> <span class="cn">NULL</span>, <span class="at">inits =</span> <span class="cn">NULL</span>, </span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>              <span class="at">control =</span> <span class="fu">list</span>(<span class="at">lambda0 =</span> <span class="fl">0.04</span>, <span class="at">lambda1 =</span> <span class="fl">0.2</span>, <span class="at">lambda2 =</span> <span class="fl">0.2</span>))</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(ptgmod<span class="sc">$</span>beta.a)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(ptgmod<span class="sc">$</span>beta.m, <span class="dv">2</span>, mean)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(ptgmod<span class="sc">$</span>alpha.a, <span class="dv">2</span>, mean)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(ptgmod<span class="sc">$</span>betam_member, <span class="dv">2</span>, mean)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(ptgmod<span class="sc">$</span>alphaa_member, <span class="dv">2</span>, mean)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Gaussian Mixture Model</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>gmmmod <span class="ot">=</span> <span class="fu">bama</span>(<span class="at">Y =</span> Y, <span class="at">A =</span> A, <span class="at">M =</span> M, <span class="at">C1 =</span> C1, <span class="at">C2 =</span> C2, <span class="at">method =</span> <span class="st">&quot;GMM&quot;</span>, <span class="at">seed =</span> <span class="dv">1234</span>,</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>              <span class="at">burnin =</span> <span class="dv">1000</span>, <span class="at">ndraws =</span> <span class="dv">1100</span>, <span class="at">weights =</span> <span class="cn">NULL</span>, <span class="at">inits =</span> <span class="cn">NULL</span>, </span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>              <span class="at">control =</span> <span class="fu">list</span>(<span class="at">phi0 =</span> <span class="fl">0.01</span>, <span class="at">phi1 =</span> <span class="fl">0.01</span>))</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(gmmmod<span class="sc">$</span>beta.a)</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(gmmmod<span class="sc">$</span>beta.m, <span class="dv">2</span>, mean)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(gmmmod<span class="sc">$</span>alpha.a, <span class="dv">2</span>, mean)</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(gmmmod<span class="sc">$</span>sigma.sq.a)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(gmmmod<span class="sc">$</span>sigma.sq.e)</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(gmmmod<span class="sc">$</span>sigma.sq.g)</span></code></pre></div>
 </div>
 <div id="reference" class="section level2">
 <h2>Reference</h2>
-<p>Song, Y, Zhou, X, Zhang, M, et al. Bayesian shrinkage estimation of high dimensional causal mediation effects in omics studies. Biometrics. 2019; 1-11.</p>
+<p>Song, Y, Zhou, X, Zhang, M, et al. Bayesian shrinkage estimation of
+high dimensional causal mediation effects in omics studies. Biometrics.
+2019; 1-11.</p>
 </div>
 
 

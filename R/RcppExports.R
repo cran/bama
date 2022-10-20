@@ -19,7 +19,3 @@ rand_igamma <- function(shape, scale) {
     .Call('_bama_rand_igamma', PACKAGE = 'bama', shape, scale)
 }
 
-gmm <- function(Y, A, M, C1, C2, burnin, ndraws, seed, phi0, phi1, a0, a1, a2, a3, h1, l1, h2, l2, ha, la, samples_betam, samples_alphaa, betam_member, alphaa_member, samples_betaa, samples_alphac, samples_betac, samples_sigmasqa, samples_sigmasqe, samples_sigmasqg) {
-    invisible(.Call('_bama_gmm', PACKAGE = 'bama', Y, A, M, C1, C2, burnin, ndraws, seed, phi0, phi1, a0, a1, a2, a3, h1, l1, h2, l2, ha, la, samples_betam, samples_alphaa, betam_member, alphaa_member, samples_betaa, samples_alphac, samples_betac, samples_sigmasqa, samples_sigmasqe, samples_sigmasqg))
-}
-
