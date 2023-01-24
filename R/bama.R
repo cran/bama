@@ -55,7 +55,9 @@
 #' \item{lm0}{ - Scale parameter prior for inverse gamma for the small normal
 #'     components}
 #' \item{lm1}{ - Scale parameter prior for inverse gamma for the large normal
-#'    components}
+#'    components of beta_m}
+#' \item{lma1}{ - Scale parameter prior for inverse gamma for the large normal
+#'    component of alpha_a}
 #' \item{l}{ - Scale parameter prior for the other inverse gamma distributions}
 #' }
 #' If \code{method = "PTG"}
@@ -193,7 +195,7 @@
 #'
 #' out <- bama(Y = Y, A = A, M = M, C1 = C1, C2 = C2, method = "BSLMM", seed = 1234,
 #'             burnin = 100, ndraws = 110, weights = NULL, inits = NULL, 
-#'             control = list(k = 2, lm0 = 1e-04, lm1 = 1, l = 1))
+#'             control = list(k = 2, lm0 = 1e-04, lm1 = 1, lma1 = 1, l = 1))
 #'
 #' # The package includes a function to summarise output from 'bama'
 #' summary <- summary(out)
@@ -239,7 +241,7 @@
 #' @authors Alexander Rix, Michael Kleinsasser
 #' @export
 bama <- function(Y, A, M, C1, C2, method, burnin, ndraws, weights = NULL, inits = NULL, 
-                 control = list(k = 2.0, lm0 = 1e-4, lm1 = 1.0, l = 1.0, 
+                 control = list(k = 2.0, lm0 = 1e-4, lm1 = 1.0, lma1 = 1.0, l = 1.0, 
                                 lambda0 = 0.04, lambda1 = 0.2, lambda2 = 0.2,
                                 phi0 = 0.01, phi1 = 0.01, a0 = 0.01 * ncol(M), 
                                 a1 = 0.05 * ncol(M), a2 = 0.05 * ncol(M), a3 = 0.89 * ncol(M)), seed = NULL)
@@ -344,6 +346,10 @@ bama <- function(Y, A, M, C1, C2, method, burnin, ndraws, weights = NULL, inits 
             lm1 = 1.0
         else
             lm1 = control$lm1
+        if (!("lma1" %in% names(control)))
+          lma1 = 1.0
+        else
+          lma1 = control$lma1 
         if (!("l" %in% names(control)))
             l = 1.0
         else
@@ -358,11 +364,14 @@ bama <- function(Y, A, M, C1, C2, method, burnin, ndraws, weights = NULL, inits 
         if (!is.numeric(lm1) || !is.vector(lm1) || length(lm1) != 1 || lm1 < 0)
             stop("'lm1' should be a nonnegative number.")
         
+        if (!is.numeric(lma1) || !is.vector(lma1) || length(lma1) != 1 || lma1 < 0)
+          stop("'lma1' should be a nonnegative number.")
+        
         if (!is.numeric(l) || !is.vector(l) || length(l) != 1 || l < 0)
             stop("'l' should be a nonnegative number.")
         
         bama.out <- run_bama_mcmc(Y, A, M, C1, C2, beta.m, alpha.a, burnin, ndraws - burnin,
-                                  k, lm0, lm1, l)
+                                  k, lm0, lm1, lma1, l)
         
         colnames(bama.out$beta.m)  <- colnames(M)
         colnames(bama.out$alpha.a) <- colnames(M)

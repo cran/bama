@@ -398,8 +398,8 @@ double rand_igamma(double shape, double scale){
 //          arma::mat& samples_sigmasqg
 // ) {
 //   
-//   //std::ofstream myfile;
-//   //myfile.open ("ptgdraws.txt");
+//   
+//   
 //   
 //   Rcpp::Environment base_env("package:base");
 //   Rcpp::Function set_seed_r = base_env["set.seed"];
@@ -467,20 +467,16 @@ double rand_igamma(double shape, double scale){
 //     for(int j = 0; j < p; j++) {
 //       // Wj
 //       arma::vec mj = M.col(j);
-//       //myfile<< "sigmasqe: " << sigmasqe << "\n";
-//       //myfile<< "sigmasqg: " << sigmasqg << "\n";
-//       //myfile<< "accu(mj % mj): " << accu(mj % mj) << "\n";
+//       
 //       Wjmat(0, 0) = accu(mj % mj) / sigmasqe;
-//       //myfile<< "Wjmat(0, 0): " << Wjmat(0, 0) << "\n";
+//      
 //       Wjmat(1, 1) = accu(A % A) / sigmasqg;
-//       //myfile<< "Wjmat(1, 1): " << Wjmat(1, 1) << "\n";
-//       //myfile<< "Wjmat(0, 0): " << Wjmat(0, 0) << " Wjmat(1, 1): " << Wjmat(1, 1) << "\n";
 //       
 //       //lwj
-//       //myfile<< "lwjmat calculation: " << "\n";
+//      
 //       lwjmat(0) = accu( (Y - A * betaa - M * betam + mj * betam(j)) % mj ) / sigmasqe;
 //       lwjmat(1) = accu(mj % A) / sigmasqg;
-//       ////myfile<< "lwjmat(0): " << lwjmat(0) << " lwjmat(1): " << lwjmat(1) << "\n";
+//      
 //       
 //       // logpgam
 //       arma::vec lggam(1, arma::fill::zeros);
@@ -494,7 +490,6 @@ double rand_igamma(double shape, double scale){
 //         0.5 * log(Vk3(1, 1)) + 0.5 * lwjmat(1) * (1 / (Wjmat(1, 1) + (1 / Vk3(1, 1)))) * lwjmat(1) + std::log(pi(2) + 0.01));
 //       logpgam(2) = lggam(0);
 //       logpgam(3) = std::log(pi(3) + 0.01);
-//       //myfile<< "logpgam(0): " << logpgam(0) << " logpgam(1): " << logpgam(1) << " logpgam(2): " << logpgam(2) << " logpgam(3): " << logpgam(3) << "\n";
 //       
 //       // sample k
 //       double max = -100.0;
@@ -505,9 +500,8 @@ double rand_igamma(double shape, double scale){
 //       }
 //       arma::vec ep = exp(logpgam - max);
 //       arma::vec eprop = ep / accu(ep);
-//       //myfile<< "sample k: " << "\n";
+//       
 //       k = as_scalar( RcppArmadillo::sample_main(sseq, 1, true, eprop) );
-//       //myfile<< "k: " << k << "\n";
 //       
 //       // sample betam and alphaa
 //       arma::mat WjVkInvInv(2, 2, arma::fill::zeros);
@@ -534,7 +528,6 @@ double rand_igamma(double shape, double scale){
 //         alphaa(j) = 0.0;
 //         break;
 //       }
-//       //myfile << "bmaa(1,p): " << bmaa(1,p) << " bmaa(0,p): " << bmaa(0,p) << "\n";
 //       
 //       if(draw >= burnin) {
 //         samples_betam(draw - burnin, j) = betam(j);
@@ -569,7 +562,7 @@ double rand_igamma(double shape, double scale){
 //     
 //     // sample the vk's
 //     double sgam = accu(gamk);
-//     ////myfile<< "sgam: " << sgam << "\n";
+//    
 //     arma::mat gam_sum(2, 2, arma::fill::zeros);
 //     for(int t = 0; t < p; t++) {
 //       gam_sum += gamk(t) * (bmaa(0,p) * bmaa(0,p) + bmaa(1,p) * bmaa(1,p));
@@ -581,27 +574,26 @@ double rand_igamma(double shape, double scale){
 //       gam_sum1 += gamk(t) * (bmaa(0,p) * bmaa(0,p));
 //     }
 //     Vk2(0, 0) = rand_igamma((v / 2) + sgam, (Phinot(0, 0) / 2) + gam_sum1);
-//     ////myfile<< "Vk2(0, 0): " << Vk2(0, 0) << "\n";
 //     
 //     double gam_sum2 = 0;
 //     for(int t = 0; t < p; t++) {
 //       gam_sum2 += gamk(t) * (bmaa(1,p) * bmaa(1,p));
 //     }
 //     Vk3(1, 1) = rand_igamma((v / 2) + sgam, (Phinot(1, 1) / 2) + gam_sum2);
-//     //myfile<< "Vk3(1, 1): " << Vk3(1, 1) << "\n";
+//     
 //     // sample betaa
 //     arma::vec mvar(2, arma::fill::zeros);
 //     mvar(0) = accu(A % (Y - M * betam - C1 * betac)) / ((sigmasqe / sigmasqa) + accu(A % A));
 //     mvar(1) = std::sqrt(1 / ((1 / sigmasqa) + (accu(A % A) / sigmasqe)));
 //     betaa = R::rnorm(mvar(0), mvar(1));
-//     //myfile << "betaa: " << betaa << "\n";
+//     
 //     if(draw >= burnin) {
 //       samples_betaa(draw - burnin, 0) = betaa;
 //     }
 //     
 //     // sigmasqa
 //     sigmasqa = rand_igamma(0.5 + ha, 0.5 * betaa * betaa + la);
-//     //myfile << "sigmasqa: " << sigmasqa << "\n";
+//     
 //     if(draw >= burnin) {
 //       samples_sigmasqa(draw - burnin, 0) = sigmasqa;
 //     }
@@ -609,7 +601,7 @@ double rand_igamma(double shape, double scale){
 //     // sample sigmasqe
 //     double sum_r = accu(Y - M * betam - A * betaa - C1 * betac);
 //     sigmasqe = rand_igamma(0.5 * n + h1, 0.5 * sum_r * sum_r + l1);
-//     //myfile<< "sigmasqe: " << sigmasqe << "\n";
+//     
 //     if(draw >= burnin) {
 //       samples_sigmasqe(draw - burnin, 0) = sigmasqe;
 //     }
@@ -621,11 +613,10 @@ double rand_igamma(double shape, double scale){
 //       resv = (M.row(i) - A.row(i) * alphaa - C2.row(i) * alphac) *
 //         (M.row(i) - A.row(i) * alphaa - C2.row(i) * alphac).t();
 //       resg += resv(0);
-//       ////myfile<< "resv(0): " << resv(0) << "\n";
 //     }
-//     //myfile<< "resg: " << resg << "\n";
+//     
 //     sigmasqg = rand_igamma((p * n / 2) + h2, (resg / 2) + l2);
-//     //myfile<< "sigmasqg: " << sigmasqg << "\n";
+//     
 //     if(draw >= burnin) {
 //       samples_sigmasqg(draw - burnin, 0) = sigmasqg;
 //     }
@@ -639,7 +630,7 @@ double rand_igamma(double shape, double scale){
 //       mu = accu(Cw % (Y - A * betaa - M * betam - C1 * betac + Cw * betac(w))) / accu(Cw % Cw);
 //       sd = sqrt(sigmasqe / accu(Cw % Cw));
 //       betac(w) = R::rnorm(mu, sd);
-//       ////myfile<< "betac(w): " << betac(w) << "\n";
+//       
 //       if(draw >= burnin) {
 //         samples_betac(draw - burnin, w) = betac(w);
 //       }
@@ -654,7 +645,7 @@ double rand_igamma(double shape, double scale){
 //         mu = accu(Cw % (M.col(j) - A * alphaa(j) - C2 * alphac + Cw * alphac.col(j))) / accu(Cw % Cw);
 //         sd = sqrt(sigmasqg / accu(Cw % Cw));
 //         alphac(w, j) = R::rnorm(mu, sd);
-//         //myfile<< "alphac(w, j): " << alphac(w, j) << "\n";
+//         
 //         if(draw >= burnin) {
 //           samples_alphac(draw - burnin, w * p + j) = alphac(w, j);
 //         }
@@ -663,6 +654,6 @@ double rand_igamma(double shape, double scale){
 //     
 //     draw += 1;
 //   }
-//   //myfile.close();
+//   
 // }
 
